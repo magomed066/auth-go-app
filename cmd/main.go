@@ -1,34 +1,35 @@
 package main
 
 import (
-	"log/slog"
-	"os"
+	"charm.land/log/v2"
 
 	"github.com/joho/godotenv"
+	db "github.com/magomed066/auth-go-app"
 	"github.com/magomed066/auth-go-app/internal/env"
 )
 
-func main() {
+func initConfig() {
 	err := godotenv.Load()
 	if err != nil {
-		slog.Error("Error loading .env file", "error", err)
-		os.Exit(1)
+		log.Fatal("Could not load .env file", "err", err)
 	}
 
+	db.Connect(env.GetEnvs().DB_URL)
+	log.Info("DB is connected")
+}
+
+func main() {
+	initConfig()
+	
 	cfg := config{
-		addr: env.GetPort(),
+		addr: env.GetEnvs().PORT,
 	}
 
 	api := application{
 		config:	cfg,
 	}
-
-	//Error log
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
 	
 	if err := api.run(api.mount()); err != nil {
-		slog.Error("Server failed to start", "error", err)
-		os.Exit(1)
+		log.Fatal("Server failed to start", "err", err)
 	}
 }

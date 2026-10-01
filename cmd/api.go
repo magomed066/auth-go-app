@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"time"
 
+	"charm.land/log/v2"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
 )
@@ -38,7 +38,7 @@ func (app *application) run(h http.Handler) error {
 		IdleTimeout: time.Minute,
 	}
 
-	log.Printf("Server has started at addr %s", app.config.addr)
+	log.Info("Server has started at", "addr", app.config.addr)
 
 	return srv.ListenAndServe()
 }
