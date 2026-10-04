@@ -15,7 +15,7 @@ func (app *application) mount() http.Handler {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID) // important for rate limiting
-	r.Use(middleware.RealIP)    // important for rate limiting, analytics and tracing
+		r.Use(middleware.RealIP)    // important for rate limiting, analytics and tracing
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer) // recover from crashes
 
@@ -31,7 +31,7 @@ func (app *application) mount() http.Handler {
 	// Dependencies
 	usersRepository := users.NewRepository(app.config.db)
 	usersService := users.NewService(&usersRepository)
-	usersHandler := users.NewHandler(&usersService)
+	usersHandler := users.NewHandler(usersService)
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {

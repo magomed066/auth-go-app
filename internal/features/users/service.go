@@ -13,12 +13,17 @@ type Service interface {
 }
 
 type svc struct {
-	repository Repository
+	repository userRepository
 }
 
-func NewService(repo *Repository) Service {
+type userRepository interface {
+	Register(context.Context, NewUser) (User, error)
+	GetByEmail(context.Context, string) (User, error)
+}
+
+func NewService(repo userRepository) Service {
 	return &svc{
-		repository: *repo,
+		repository: repo,
 	}
 }
 
@@ -38,15 +43,18 @@ func (s *svc) Register(ctx context.Context, data NewUser) (User, error) {
 }
 
 func (s *svc) Login(ctx context.Context, data LoginUserParams) (User, error) {
-	user, err := s.repository.Login(ctx, data)
+	if len(data.Password) > 72 {
+		return User{}, ErrPasswordTooLong
+	}
+	user, err := s.repository.GetByEmail(ctx, data.Email)
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return User{}, ErrUserNotFound
+			return User{}, ErrInvalidCredentials
 		}
 
 		return User{}, err
 	}
-
+	
 	return user, nil
 }

@@ -15,14 +15,15 @@ type handler struct {
 	service Service
 }
 
-func NewHandler(service *Service) *handler {
+func NewHandler(service Service) *handler {
 	return &handler{
-		service: *service,
+		service: service,
 	}
 }
 
 // ? Methods
 func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
 	var user CreateUserParams
 
 	err := request.Read(r, &user)
@@ -84,7 +85,6 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	err := request.Read(r, &body)
 	if err != nil {
-		log.Error(err)
 		request.Error(w, http.StatusBadRequest, err)
 		return
 	}
@@ -93,10 +93,19 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
 		request.Error(w, http.StatusBadRequest, err)
 		return
 	}
+	if len(body.Password) > 72 {
+		request.Error(w, http.StatusBadRequest, ErrPasswordTooLong)
+		return
+	}
 	
 	user, err := h.service.Login(r.Context(), body)
 	if err != nil {
-		request.Error(w, http.StatusNotFound, err)
+		if errors.Is(err, ErrInvalidCredentials) {
+			request.Error(w, http.StatusUnauthorized, ErrInvalidCredentials)
+			return
+		}
+		log.Error("Could not log in user", "err", err)
+		request.Error(w, http.StatusInternalServerError, err)
 		return
 	}
 
