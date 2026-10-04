@@ -7,6 +7,8 @@ import (
 	"charm.land/log/v2"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/magomed066/auth-go-app/internal/features/users"
+	"gorm.io/gorm"
 )
 
 func (app *application) mount() http.Handler {
@@ -24,6 +26,17 @@ func (app *application) mount() http.Handler {
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Server has started"))
+	})
+
+	// Dependencies
+	usersRepository := users.NewRepository(app.config.db)
+	usersService := users.NewService(&usersRepository)
+	usersHandler := users.NewHandler(&usersService)
+
+	r.Route("/api/v1", func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/register", usersHandler.Register)
+		})
 	})
 
 	return r
@@ -49,5 +62,5 @@ type application struct {
 
 type config struct {
 	addr string // PORT
+	db *gorm.DB
 }
-
