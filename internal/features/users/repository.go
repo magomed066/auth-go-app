@@ -32,3 +32,14 @@ func (repo *Repository) Register(ctx context.Context, data NewUser) (User, error
 
 	return user, nil
 }
+
+func (repo *Repository) Login(ctx context.Context, data LoginUserParams) (User, error) {
+	var user User
+
+	err := repo.db.WithContext(ctx).Where("email = ?", data.Email).First(&user).Error
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
+}

@@ -9,6 +9,7 @@ import (
 
 type Service interface {
 	Register(ctx context.Context, data NewUser) (User, error)
+	Login(ctx context.Context, data LoginUserParams) (User, error)
 }
 
 type svc struct {
@@ -28,6 +29,20 @@ func (s *svc) Register(ctx context.Context, data NewUser) (User, error) {
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return User{}, ErrUserAlreadyExists
+		}
+
+		return User{}, err
+	}
+
+	return user, nil
+}
+
+func (s *svc) Login(ctx context.Context, data LoginUserParams) (User, error) {
+	user, err := s.repository.Login(ctx, data)
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return User{}, ErrUserNotFound
 		}
 
 		return User{}, err

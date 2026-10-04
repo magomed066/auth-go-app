@@ -78,3 +78,44 @@ func (h *handler) Register(w http.ResponseWriter, r *http.Request) {
 		"accessToken": token,
 	})
 }
+
+func (h *handler) Login(w http.ResponseWriter, r *http.Request) {
+	var body LoginUserParams
+
+	err := request.Read(r, &body)
+	if err != nil {
+		log.Error(err)
+		request.Error(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := request.Validate(&body, LoginValidationErrors); err != nil {
+		request.Error(w, http.StatusBadRequest, err)
+		return
+	}
+	
+	user, err := h.service.Login(r.Context(), body)
+	if err != nil {
+		request.Error(w, http.StatusNotFound, err)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
+	if err != nil {
+		request.Error(w, http.StatusUnauthorized, ErrUserPassword)
+		return
+	}
+
+	token, err := jwt.CreateToken(user.ID)
+	if err != nil {
+		log.Error("Could not create token", "err", err)
+		request.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+
+	request.Success(w, http.StatusOK, map[string]any{
+		"user":        user,
+		"accessToken": token,
+	})
+}

@@ -32,6 +32,7 @@ type NewUser struct {
 	PasswordHash []byte
 }
 
-// func (params *CreateUserParams) IsValid() bool {
-// 	return params.FirstName != "" && params.LastName != "" && params.Email != "" && params.Password != ""
-// }
+type LoginUserParams struct {
+	Email 		string	`json:"email" validate:"required,email"`
+	Password 	string	`json:"password" validate:"required,min=6"`
+}
